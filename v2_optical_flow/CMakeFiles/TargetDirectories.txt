@@ -1,0 +1,3 @@
+/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/v2/CMakeFiles/rebuild_cache.dir
+/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/v2/CMakeFiles/edit_cache.dir
+/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/v2/CMakeFiles/detectionObject.dir

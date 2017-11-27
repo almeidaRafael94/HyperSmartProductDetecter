@@ -1,0 +1,3 @@
+/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/Versions/Kaynak_Kod_Örnekleri/CMakeFiles/rebuild_cache.dir
+/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/Versions/Kaynak_Kod_Örnekleri/CMakeFiles/edit_cache.dir
+/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/Versions/Kaynak_Kod_Örnekleri/CMakeFiles/detectionObject.dir
