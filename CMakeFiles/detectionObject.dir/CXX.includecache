@@ -6,17 +6,17 @@
 
 #IncludeRegexTransform: 
 
-/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/main.cpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/main.cpp
 opencv2/imgcodecs.hpp
-/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/opencv2/imgcodecs.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/imgcodecs.hpp
 opencv2/imgproc.hpp
-/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/opencv2/imgproc.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/imgproc.hpp
 opencv2/videoio.hpp
-/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/opencv2/videoio.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/videoio.hpp
 opencv2/highgui.hpp
 -
 opencv2/bgsegm.hpp
-/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/opencv2/bgsegm.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/bgsegm.hpp
 opencv2/video.hpp
 -
 stdio.h

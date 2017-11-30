@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/main.cpp" "/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/CMakeFiles/detectionObject.dir/main.cpp.o"
+  "/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/main.cpp" "/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/CMakeFiles/detectionObject.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "Clang")
 

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project
+# Install script for directory: /Users/rafaelalmeida/Documents/HyperSmartProductDetecter
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -35,5 +35,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/rafaelalmeida/Google Drive/UA/VisualComputation/Project/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
