@@ -160,8 +160,8 @@ int main(int argc, char* argv[])
     //createTrackbar( "Morphological kernel size:", "Products Detector",&morph_size, max_kernel_size);
     //createTrackbar( "Min Threshold", "Products Detector",&thresh, max_thresh);
     //createTrackbar( "Max Threshold", "Products Detector",&thresh_max, max_thresh);
-    createTrackbar( "Line position", "Products Detector",&linePosition, maxLinePosition);
-    createTrackbar( "Draw", "Products Detector",&poly, maxPoly);
+    //createTrackbar( "Line position", "Products Detector",&linePosition, maxLinePosition);
+    //createTrackbar( "Draw", "Products Detector",&poly, maxPoly);
 
     // Insert number of frame on image
     //frameNumber(fgMaskMOG, capture);
@@ -282,7 +282,7 @@ Mat thresh_callback(Mat src, String mask_type)
           // ellipse
           ellipse( drawing, minEllipse[i], color, 2, 8 );
 
-          if (minEllipse[i].center.y < ((maxLinePosition-linePosition) + 1) && minEllipse[i].center.y > ((maxLinePosition-linePosition) - 1))
+          if (minEllipse[i].center.y < (linePosition + 4) && minEllipse[i].center.y > (linePosition - 4))
           {
             circle(drawing,minEllipse[i].center,10,Scalar(0,0,255), CV_FILLED);
             numberOfProducts ++;
