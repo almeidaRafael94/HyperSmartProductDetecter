@@ -6,6 +6,7 @@
 #include <opencv2/highgui.hpp>
 #include "opencv2/bgsegm.hpp"
 #include <opencv2/video.hpp>
+#include "opencv2/opencv.hpp"
 //C
 #include <stdio.h>
 //C++
@@ -45,7 +46,8 @@ int thresh_max = 255;
 int max_thresh = 255;
 
 int maxLinePosition = 426;
-int linePosition = maxLinePosition/2;
+//int linePosition = maxLinePosition/2;
+int linePosition=300;
 
 RNG rng(12345);
 Mat threshold_output;
@@ -70,6 +72,7 @@ int poly = 1;
 int maxPoly = 2;
 
 int numberOfProducts = 0;
+cv::SimpleBlobDetector::Params params; 
 
 //get the frame number and write it on the current frame
 void frameNumber(Mat img, VideoCapture capture)
@@ -120,6 +123,8 @@ void help()
 
 int main(int argc, char* argv[])
 {
+    
+   
     //print help information
     help();
     //check for the input parameter correctness
@@ -156,15 +161,23 @@ int main(int argc, char* argv[])
     /// Uncomment to use
 
     //createTrackbar( "Morphological elem: 0:Rect  1:Cross  2:Ellipse", "Products Detector",&morph_elem, max_elem);
-    //createTrackbar( "Morphological operator: ", "Products Detector",&morph_operator, max_operator);
+    createTrackbar( "Morphological operator: ", "Products Detector",&morph_operator, max_operator);
     //createTrackbar( "Morphological kernel size:", "Products Detector",&morph_size, max_kernel_size);
-    //createTrackbar( "Min Threshold", "Products Detector",&thresh, max_thresh);
+    //createTrackbarr( "Min Threshold", "Products Detector",&thresh, max_thresh);
     //createTrackbar( "Max Threshold", "Products Detector",&thresh_max, max_thresh);
-    //createTrackbar( "Line position", "Products Detector",&linePosition, maxLinePosition);
+    createTrackbar( "Line position", "Products Detector",&linePosition, maxLinePosition);
     //createTrackbar( "Draw", "Products Detector",&poly, maxPoly);
 
     // Insert number of frame on image
     //frameNumber(fgMaskMOG, capture);
+
+   
+ 
+    
+     
+    // Show blobs
+//    imshow("keypoints", im_with_keypoints );
+  //  waitKey(0);
 
     if(strcmp(argv[1], "-vid") == 0) 
     {
@@ -193,6 +206,7 @@ void processVideo(char* videoFilename) {
         exit(EXIT_FAILURE);
     }
 
+   
     //read input data. ESC or 'q' for quitting
     while( (char)keyboard != 'q' && (char)keyboard != 27 ){
         //read the current frame
@@ -203,31 +217,34 @@ void processVideo(char* videoFilename) {
             //exit(EXIT_FAILURE);
         }
 
+        // Draw detected blobs as red circles.
+        // DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures the size of the circle corresponds to the size of blob
+        
         //Resize image
         //cv::resize(frame, frame, cv::Size(), 0.8, 0.8);
 
         //update the background model
-        pMOG->apply(frame, fgMaskMOG);
+        pMOG->apply(frame, fgMaskMOG,0);
         //pMOG2->apply(frame, fgMaskMOG2);
 
         if(!fgMaskMOG.empty())
         {
-        	drawing = thresh_callback(fgMaskMOG, "mog1");
+          drawing = thresh_callback(fgMaskMOG, "mog1");
           // Add product rectangles detected to original frame
-			    add(drawing,frame,drawing);
-      		imshow("Products Detector", drawing); //aqui
+          add(drawing,frame,drawing);
+          imshow("Products Detector", drawing); //aqui
         } 
 
         /*
-      	if(!fgMaskMOG2.empty())
+        if(!fgMaskMOG2.empty())
         {
           Mat drawing = thresh_callback(fgMaskMOG2, "mog2");
           Mat output;
-  		
+      
           add(drawing,originalFrame,output);
-        	//imshow("Products Detector2", output); aqui
-      	}
-    	  */
+          //imshow("Products Detector2", output); aqui
+        }
+        */
 
         //get the input from the keyboard
         keyboard = waitKey( 30 );
@@ -237,18 +254,65 @@ void processVideo(char* videoFilename) {
 }
 /** @function thresh_callback */
 Mat thresh_callback(Mat src, String mask_type)
-{		
+{   
   //Mat element = getStructuringElement( morph_elem, Size( 2*morph_size + 1, 2*morph_size+1 ), Point( morph_size, morph_size ) );
   //morphologyEx( src, dst, operation, element );
 
+
+ 
+  /*
   Mat element = getStructuringElement(morph_elem,Size(morph_size, morph_size));
   morphologyEx( src, dst, morph_operator, element, Point(-1,-1));
+
+  namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
+  imshow( "Contours", dst ); 
+
+  */
+  
+  /*
+  Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
+  // Detect blobs.
+  std::vector<KeyPoint> keypoints;
+  detector->detect(src, keypoints);
+
+
+  Mat im_with_keypoints;
+  drawKeypoints( src, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+  
+
+  //cerr <<  keypoints.size() << endl;
+
+  namedWindow( "Contours", CV_WINDOW_AUTOSIZE );
+  imshow( "Contours", im_with_keypoints );
+  */
+  /*
   //imshow("morphologyEx", dst);
 
   /// Detect edges using Threshold
-  threshold( dst, threshold_output, thresh, thresh_max, THRESH_BINARY );
+  threshold( im_with_keypoints, threshold_output, thresh, thresh_max, THRESH_BINARY );
   /// Find contours
   findContours( threshold_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+  
+  */
+
+  threshold( src, threshold_output, thresh, thresh_max, THRESH_BINARY );
+  /// Find contours
+  findContours( threshold_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+  
+
+    /// Draw contours
+  Mat cenas = Mat::zeros( threshold_output.size(), CV_8UC3 );
+  for( int i = 0; i< contours.size(); i++ )
+     {
+       Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+       drawContours( cenas, contours, i, color, 2, 8, hierarchy, 0, Point() );
+     }
+
+  namedWindow( "Contours2", CV_WINDOW_AUTOSIZE );
+  imshow( "Contours2", cenas );
+  
+
+ 
 
   /// Find the rotated rectangles and ellipses for each contour
   vector<RotatedRect> minRect( contours.size() );
@@ -263,7 +327,6 @@ Mat thresh_callback(Mat src, String mask_type)
           minEllipse[i] = fitEllipse( Mat(contours[i]) ); 
        }
   }
-
    /// Draw contours + rotated rects + ellipses
   Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
   line(drawing, Point(0, maxLinePosition-linePosition), Point(drawing.cols, maxLinePosition-linePosition), Scalar(0,255,0), 3);
@@ -286,6 +349,7 @@ Mat thresh_callback(Mat src, String mask_type)
           {
             circle(drawing,minEllipse[i].center,10,Scalar(0,0,255), CV_FILLED);
             numberOfProducts ++;
+//cout << numberOfProducts << endl;
           }  
           else
           {
@@ -327,23 +391,23 @@ Mat thresh_callback(Mat src, String mask_type)
   */
 
   /*
-	/// Draw polygonal contour + bonding rects + circles
-	Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
+  /// Draw polygonal contour + bonding rects + circles
+  Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
 
 
-	for( int i = 0; i< contours.size(); i++ )
-	 {
+  for( int i = 0; i< contours.size(); i++ )
+   {
 
-	   Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
-	   //Scalar color = Scalar( 0, 255, 0 );
-	   //drawContours( drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-	  if ( ((boundRect[i].width * boundRect[i].height) > 1000) )           
-		    {
-			     rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
+     Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
+     //Scalar color = Scalar( 0, 255, 0 );
+     //drawContours( drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
+    if ( ((boundRect[i].width * boundRect[i].height) > 1000) )           
+        {
+           rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
            numberOfProducts ++;
-		    }
-	  }
+        }
+    }
   */
 
-	return drawing;
+  return drawing;
 }
