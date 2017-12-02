@@ -26,7 +26,7 @@ Ptr<BackgroundSubtractor> pMOG;
 int keyboard; //input from keyboard
 void help();
 void processVideo(char* videoFilename);
-Mat thresh_callback(Mat src, String mask_type );
+Mat thresh_callback(Mat src, String mask_type, Mat frame);
 void frameNumber(Mat img, VideoCapture capture);
 
 void Erosion( int, void* );
@@ -36,10 +36,12 @@ Mat dilation_element, erosion_element;
 int dilation_type, erosion_type;
 
 int erosion_elem = 0;
-int erosion_size = 0;
+int erosion_size = 3;
 int dilation_elem = 0;
 int dilation_size = 0;
-
+Mat erode_element = getStructuringElement( MORPH_ELLIPSE,
+                         Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                         Point( erosion_size, erosion_size ) );
 Mat dst;
 int thresh = 0;
 int thresh_max = 255;
@@ -47,7 +49,7 @@ int max_thresh = 255;
 
 int maxLinePosition = 426;
 //int linePosition = maxLinePosition/2;
-int linePosition=300;
+int linePosition=100;
 
 RNG rng(12345);
 Mat threshold_output;
@@ -68,8 +70,8 @@ int const max_operator = 4;
 int const max_elem = 2;
 int const max_kernel_size = 21;
 
-int poly = 1;
-int maxPoly = 2;
+int poly = 3;
+int maxPoly = 3;
 
 int numberOfProducts = 0;
 cv::SimpleBlobDetector::Params params; 
@@ -161,19 +163,15 @@ int main(int argc, char* argv[])
     /// Uncomment to use
 
     //createTrackbar( "Morphological elem: 0:Rect  1:Cross  2:Ellipse", "Products Detector",&morph_elem, max_elem);
-    createTrackbar( "Morphological operator: ", "Products Detector",&morph_operator, max_operator);
+    //createTrackbar( "Morphological operator: ", "Products Detector",&morph_operator, max_operator);
     //createTrackbar( "Morphological kernel size:", "Products Detector",&morph_size, max_kernel_size);
     //createTrackbarr( "Min Threshold", "Products Detector",&thresh, max_thresh);
     //createTrackbar( "Max Threshold", "Products Detector",&thresh_max, max_thresh);
-    createTrackbar( "Line position", "Products Detector",&linePosition, maxLinePosition);
-    //createTrackbar( "Draw", "Products Detector",&poly, maxPoly);
+    //createTrackbar( "Line position", "Products Detector",&linePosition, maxLinePosition);
+    createTrackbar( "Draw", "Products Detector",&poly, maxPoly);
 
     // Insert number of frame on image
     //frameNumber(fgMaskMOG, capture);
-
-   
- 
-    
      
     // Show blobs
 //    imshow("keypoints", im_with_keypoints );
@@ -229,7 +227,7 @@ void processVideo(char* videoFilename) {
 
         if(!fgMaskMOG.empty())
         {
-          drawing = thresh_callback(fgMaskMOG, "mog1");
+          drawing = thresh_callback(fgMaskMOG, "mog1", frame);
           // Add product rectangles detected to original frame
           add(drawing,frame,drawing);
           imshow("Products Detector", drawing); //aqui
@@ -253,7 +251,7 @@ void processVideo(char* videoFilename) {
     capture.release();
 }
 /** @function thresh_callback */
-Mat thresh_callback(Mat src, String mask_type)
+Mat thresh_callback(Mat src, String mask_type, Mat frame)
 {   
   //Mat element = getStructuringElement( morph_elem, Size( 2*morph_size + 1, 2*morph_size+1 ), Point( morph_size, morph_size ) );
   //morphologyEx( src, dst, operation, element );
@@ -295,28 +293,62 @@ Mat thresh_callback(Mat src, String mask_type)
   
   */
 
-  threshold( src, threshold_output, thresh, thresh_max, THRESH_BINARY );
+  // apply your filter
+  
+  Mat canny;
+  Mat canny_output;
+  Mat closing_output;
+  erode( frame, closing_output, erode_element );
+  dilate( closing_output, closing_output, erode_element );
+  cvtColor(closing_output, canny, CV_RGB2GRAY);
+
+  Canny(canny, canny_output, 180, 200, 3, true);
+
+  blur(canny_output, canny_output, Size(11,11));
+
+  findContours( canny_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+  for (vector<vector<Point> >::iterator it = contours.begin(); it!=contours.end(); )
+  {
+    if (it->size()< 100)
+        it=contours.erase(it);
+    else
+        ++it;
+  }
+
+  Mat mask = Mat::zeros(canny_output.rows, canny_output.cols, CV_8UC1);
+  //drawContours(mask, contours, -1, Scalar(255), CV_FILLED);
+
+  //imshow("Canny filter", mask);
+  
+
+  /// Get the moments
+  vector<Moments> mu(contours.size() );
+  for( int i = 0; i < contours.size(); i++ )
+     { mu[i] = moments( contours[i], false ); }
+
+  ///  Get the mass centers:
+  vector<Point2f> mc( contours.size() );
+
+  for( int i = 0; i < contours.size(); i++ )
+  {
+    mc[i] = Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
+  }
+
+
+  //threshold( src, threshold_output, thresh, thresh_max, THRESH_BINARY );
+
   /// Find contours
-  findContours( threshold_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-  
-
-    /// Draw contours
-  Mat cenas = Mat::zeros( threshold_output.size(), CV_8UC3 );
-  for( int i = 0; i< contours.size(); i++ )
-     {
-       Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-       drawContours( cenas, contours, i, color, 2, 8, hierarchy, 0, Point() );
-     }
-
-  namedWindow( "Contours2", CV_WINDOW_AUTOSIZE );
-  imshow( "Contours2", cenas );
-  
-
- 
+  //findContours( threshold_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
   /// Find the rotated rectangles and ellipses for each contour
   vector<RotatedRect> minRect( contours.size() );
   vector<RotatedRect> minEllipse( contours.size() );
+  vector<Rect> boundRect( contours.size() );
+  vector<vector<Point> > contours_poly( contours.size() );
+  vector<Point> approxShape;
+
+
 
   ///First Approach -> minAreaRect
   for( int i = 0; i < contours.size(); i++ )
@@ -327,50 +359,110 @@ Mat thresh_callback(Mat src, String mask_type)
           minEllipse[i] = fitEllipse( Mat(contours[i]) ); 
        }
   }
+
    /// Draw contours + rotated rects + ellipses
-  Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
+  Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
   line(drawing, Point(0, maxLinePosition-linePosition), Point(drawing.cols, maxLinePosition-linePosition), Scalar(0,255,0), 3);
 
   for( int i = 0; i< contours.size(); i++ )
   {
-      Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+      //Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+      Scalar green = Scalar(0,255,0);
+      Scalar red = Scalar(0,0,255);
+      Scalar blue = Scalar(255,255,0);
       
       if(poly == 0)
       {
-          //contour
-          drawContours( drawing, contours, i, color, 2, 8, vector<Vec4i>(), 0, Point() );
+        //contour
+        //drawContours( drawing, contours, i, blue, CV_FILLED, 8, vector<Vec4i>(), 0, Point());
+        drawContours( drawing, contours, i, blue, CV_FILLED, 8, hierarchy, 0, Point() );
+        circle( drawing, mc[i],10, red, -1, 8, 0 );
+
       }
       else if(poly == 1)
       {
           // ellipse
-          ellipse( drawing, minEllipse[i], color, 2, 8 );
+          ellipse( drawing, minEllipse[i], green, 2, 8 );
 
-          if (minEllipse[i].center.y < (linePosition + 4) && minEllipse[i].center.y > (linePosition - 4))
+          if (minEllipse[i].center.y < ((maxLinePosition-linePosition) + 2) && minEllipse[i].center.y > ((maxLinePosition-linePosition) - 2))
           {
             circle(drawing,minEllipse[i].center,10,Scalar(0,0,255), CV_FILLED);
             numberOfProducts ++;
-//cout << numberOfProducts << endl;
           }  
           else
           {
              circle(drawing,minEllipse[i].center,5,Scalar(0,255,0));
           }
       } 
-      else
+      else if(poly == 2)
       {
+
+        //approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+        //boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+        //rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), blue, CV_FILLED, 8, 0 );
+
+
           // rotated rectangle
+       
           Point2f rect_points[4]; 
           minRect[i].points( rect_points);
+
+          bool draw = true;
           for( int j = 0; j < 4; j++ )
           {
-            if(norm(rect_points[j] - rect_points[(j+1)%4]) > 30 )
+            if(norm(rect_points[j] - rect_points[(j+1)%4]) < 50 )
             {
-              // min rectangle
-              line( drawing, rect_points[j], rect_points[(j+1)%4], color, 2, 8 );
+              draw = false;
+              break;
+            }
+          }
+
+          if(draw)
+          {
+            for( int j = 0; j < 4; j++ )
+            {
+              line( drawing, rect_points[j], rect_points[(j+1)%4], blue, 2, 8 );
+            }
+          }
+      }
+      else
+      {
+          drawContours( drawing, contours, i, blue, CV_FILLED, 8, hierarchy, 0, Point() );
+
+          if (mc[i].y < ((maxLinePosition-linePosition) + 2) && mc[i].y > ((maxLinePosition-linePosition) - 2))
+          {
+            circle( drawing, mc[i],10, green, -1, 8, 0 );
+            numberOfProducts ++;
+          }  
+          else
+          {
+            circle( drawing, mc[i],10, red, -1, 8, 0 );
+          }
+
+          Point2f rect_points[4]; 
+          minRect[i].points( rect_points);
+
+          bool draw = true;
+          for( int j = 0; j < 4; j++ )
+          {
+            if(norm(rect_points[j] - rect_points[(j+1)%4]) < 50 )
+            {
+              draw = false;
+              break;
+            }
+          }
+
+          if(draw)
+          {
+            for( int j = 0; j < 4; j++ )
+            {
+              line( drawing, rect_points[j], rect_points[(j+1)%4], blue, 2, 8 );
             }
           }
       }
   }
+  namedWindow( "Mask", WINDOW_AUTOSIZE );
+  imshow("Mask", drawing);
   
    /* Second approach
    /// Find the convex hull object for each contour
