@@ -181,8 +181,8 @@ int main(int argc, char* argv[])
     //frameNumber(fgMaskMOG, capture);
      
     // Show blobs
-//    imshow("keypoints", im_with_keypoints );
-  //  waitKey(0);
+    //    imshow("keypoints", im_with_keypoints );
+    //  waitKey(0);
 
     if(strcmp(argv[1], "-vid") == 0) 
     {
@@ -211,7 +211,6 @@ void processVideo(char* videoFilename) {
         exit(EXIT_FAILURE);
     }
 
-   
     //read input data. ESC or 'q' for quitting
     while( (char)keyboard != 'q' && (char)keyboard != 27 ){
         //read the current frame
@@ -231,7 +230,12 @@ void processVideo(char* videoFilename) {
         //cv::resize(frame, frame, cv::Size(), 0.8, 0.8);
 
         //update the background model
-        pMOG->apply(frame, fgMaskMOG,0);
+        Mat closing_output;
+        cvtColor(frame, closing_output, CV_RGB2GRAY);
+        erode( closing_output, closing_output, erode_element );
+        dilate( closing_output, closing_output, erode_element );
+
+        pMOG->apply(closing_output, fgMaskMOG,0);
         //pMOG2->apply(frame, fgMaskMOG2);
 
         if(!fgMaskMOG.empty())
@@ -317,16 +321,10 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   
   */
 
-  // apply your filter
-  
-  Mat canny;
+  // apply filter
   Mat canny_output;
-  Mat closing_output;
-  erode( frame, closing_output, erode_element );
-  dilate( closing_output, closing_output, erode_element );
-  cvtColor(closing_output, canny, CV_RGB2GRAY);
 
-  Canny(canny, canny_output, 180, 200, 3, true);
+  Canny(src, canny_output, 180, 200, 3, true);
 
   blur(canny_output, canny_output, Size(11,11));
 
@@ -349,7 +347,9 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   /// Get the moments
   vector<Moments> mu(contours.size() );
   for( int i = 0; i < contours.size(); i++ )
-     { mu[i] = moments( contours[i], false ); }
+  { 
+      mu[i] = moments( contours[i], false ); 
+  }
 
   ///  Get the mass centers:
   vector<Point2f> mc( contours.size() );
@@ -407,22 +407,27 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
         percentageAvg += mc[i].x;
       }
 
-
-
       if(poly == 0)
       {
         //contour
         //drawContours( drawing, contours, i, blue, CV_FILLED, 8, vector<Vec4i>(), 0, Point());
         drawContours( drawing, contours, i, blue, CV_FILLED, 8, hierarchy, 0, Point() );
-        circle( drawing, mc[i],10, red, -1, 8, 0 );
-
+        if (minEllipse[i].center.y < ((maxLinePosition-linePosition) + 1) && minEllipse[i].center.y > ((maxLinePosition-linePosition) - 1))
+        {
+          circle(drawing,minEllipse[i].center,10,Scalar(0,0,255), CV_FILLED);
+          numberOfProducts ++;
+        }  
+        else
+        {
+           circle(drawing,minEllipse[i].center,5,Scalar(0,255,0));
+        }
       }
       else if(poly == 1)
       {
           // ellipse
           ellipse( drawing, minEllipse[i], green, 2, 8 );
 
-          if (minEllipse[i].center.y < ((maxLinePosition-linePosition) + 2) && minEllipse[i].center.y > ((maxLinePosition-linePosition) - 2))
+          if (minEllipse[i].center.y < ((maxLinePosition-linePosition) + 1) && minEllipse[i].center.y > ((maxLinePosition-linePosition) - 1))
           {
             circle(drawing,minEllipse[i].center,10,Scalar(0,0,255), CV_FILLED);
             numberOfProducts ++;
