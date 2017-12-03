@@ -27,7 +27,7 @@ int keyboard; //input from keyboard
 void help();
 void processVideo(char* videoFilename);
 Mat thresh_callback(Mat src, String mask_type, Mat frame);
-void frameNumber(Mat img, VideoCapture capture);
+void getframeNumber(Mat img, VideoCapture capture);
 
 void Erosion( int, void* );
 void Dilation( int, void* );
@@ -47,8 +47,8 @@ int thresh = 0;
 int thresh_max = 255;
 int max_thresh = 255;
 
+int columnsNumber = 640;
 int maxLinePosition = 426;
-//int linePosition = maxLinePosition/2;
 int linePosition=100;
 
 RNG rng(12345);
@@ -74,10 +74,17 @@ int poly = 3;
 int maxPoly = 3;
 
 int numberOfProducts = 0;
+int frameNumber = 0;
+double percentageAvg = 0;
+int percentage = 50;
+int totalPointsInArea = 0;
+
+
+
 cv::SimpleBlobDetector::Params params; 
 
 //get the frame number and write it on the current frame
-void frameNumber(Mat img, VideoCapture capture)
+void getframeNumber(Mat img, VideoCapture capture)
 {
     stringstream ss;
     rectangle(frame, cv::Point(10, 2), cv::Point(100,20),cv ::Scalar(255,255,255), -1);
@@ -215,6 +222,8 @@ void processVideo(char* videoFilename) {
             //exit(EXIT_FAILURE);
         }
 
+        frameNumber ++;
+
         // Draw detected blobs as red circles.
         // DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures the size of the circle corresponds to the size of blob
         
@@ -230,6 +239,21 @@ void processVideo(char* videoFilename) {
           drawing = thresh_callback(fgMaskMOG, "mog1", frame);
           // Add product rectangles detected to original frame
           add(drawing,frame,drawing);
+
+          if(frameNumber == 0)
+          {
+            percentage = 50;
+          }
+          else if(frameNumber % 20 == 0)
+          {
+            percentage = (int)percentageAvg;
+            putText(drawing, "UPDATE Direction", cv::Point(255, 15), FONT_HERSHEY_SIMPLEX, 0.5 , cv::Scalar(0,0,255));
+            percentageAvg = 0;
+          }
+
+          char str[200];
+          sprintf(str,"%d  Antennas direction %", percentage);
+          putText(drawing, str, cv::Point(15, 15), FONT_HERSHEY_SIMPLEX, 0.5 , cv::Scalar(0,0,255));
           imshow("Products Detector", drawing); //aqui
         } 
 
@@ -364,6 +388,16 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
   line(drawing, Point(0, maxLinePosition-linePosition), Point(drawing.cols, maxLinePosition-linePosition), Scalar(0,255,0), 3);
 
+  line(drawing, Point(0, maxLinePosition*0.7), Point(drawing.cols, maxLinePosition*0.7), Scalar(0,0,255), 3);
+
+  circle( drawing, Point2f(320,maxLinePosition*0.6),10, Scalar(50,100,50), -1, 8, 0 );
+    circle( drawing, Point2f(320,maxLinePosition*0.9),10, Scalar(50,100,50), -1, 8, 0 );
+
+
+
+  totalPointsInArea = 0;
+  percentageAvg = 0;
+
   for( int i = 0; i< contours.size(); i++ )
   {
       //Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
@@ -371,6 +405,14 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
       Scalar red = Scalar(0,0,255);
       Scalar blue = Scalar(255,255,0);
       
+      if(mc[i].y > maxLinePosition*0.6 && mc[i].y < maxLinePosition*0.9)
+      {
+        totalPointsInArea ++;
+        percentageAvg += mc[i].x;
+      }
+
+
+
       if(poly == 0)
       {
         //contour
@@ -461,6 +503,7 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
           }
       }
   }
+  percentageAvg = percentageAvg/totalPointsInArea;
   namedWindow( "Mask", WINDOW_AUTOSIZE );
   imshow("Mask", drawing);
   
