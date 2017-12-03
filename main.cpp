@@ -388,12 +388,8 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   Mat drawing = Mat::zeros( canny_output.size(), CV_8UC3 );
   line(drawing, Point(0, maxLinePosition-linePosition), Point(drawing.cols, maxLinePosition-linePosition), Scalar(0,255,0), 3);
 
-  line(drawing, Point(0, maxLinePosition*0.7), Point(drawing.cols, maxLinePosition*0.7), Scalar(0,0,255), 3);
-
-  circle( drawing, Point2f(320,maxLinePosition*0.6),10, Scalar(50,100,50), -1, 8, 0 );
-    circle( drawing, Point2f(320,maxLinePosition*0.9),10, Scalar(50,100,50), -1, 8, 0 );
-
-
+  line(drawing, Point(0, maxLinePosition*0.6), Point(drawing.cols, maxLinePosition*0.6), Scalar(0,0,255), 3);
+  line(drawing, Point(0, maxLinePosition*0.9), Point(drawing.cols, maxLinePosition*0.9), Scalar(0,0,255), 3);
 
   totalPointsInArea = 0;
   percentageAvg = 0;
