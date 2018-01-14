@@ -6,21 +6,21 @@
 
 #IncludeRegexTransform: 
 
-/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/main.cpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/template_matching/main.cpp
 opencv2/imgcodecs.hpp
-/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/imgcodecs.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/template_matching/opencv2/imgcodecs.hpp
 opencv2/imgproc.hpp
-/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/imgproc.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/template_matching/opencv2/imgproc.hpp
 opencv2/videoio.hpp
-/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/videoio.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/template_matching/opencv2/videoio.hpp
 opencv2/highgui.hpp
 -
 opencv2/bgsegm.hpp
-/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/bgsegm.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/template_matching/opencv2/bgsegm.hpp
 opencv2/video.hpp
 -
 opencv2/opencv.hpp
-/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/opencv2/opencv.hpp
+/Users/rafaelalmeida/Documents/HyperSmartProductDetecter/template_matching/opencv2/opencv.hpp
 stdio.h
 -
 iostream
