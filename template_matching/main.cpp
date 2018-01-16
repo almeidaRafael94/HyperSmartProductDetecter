@@ -32,9 +32,6 @@ Mat output;
 Ptr<BackgroundSubtractor> pMOG;
 //Ptr<BackgroundSubtractor> pMOG2; //MOG2 Background subtractor
 
-
-
-
 Mat erosion_src, dilation_src, erosion_dst, dilation_dst;
 Mat dilation_element, erosion_element;
 int dilation_type, erosion_type;
@@ -43,7 +40,15 @@ int erosion_elem = 0;
 int erosion_size = 3;
 int dilation_elem = 0;
 int dilation_size = 0;
-Mat erode_element = getStructuringElement( MORPH_ELLIPSE,
+
+// MORPH_RECT = 0
+// MORPH_ELLIPSE = 1
+// MORPH_CROSS = 2
+int morph_elem = 0;
+// Kernel size
+int morph_size = 6;
+int morph_operator = 0;
+Mat erode_element = getStructuringElement( morph_elem,
                          Size( 2*erosion_size + 1, 2*erosion_size+1 ),
                          Point( erosion_size, erosion_size ) );
 Mat dst;
@@ -52,23 +57,13 @@ int thresh_max = 255;
 int max_thresh = 255;
 
 int columnsNumber = 640;
-int maxLinePosition = 426;
-int linePosition=100;
+int maxLinePosition = 300;
+int linePosition=75;
 
 RNG rng(12345);
 Mat threshold_output;
 vector<vector<Point> > contours;
 vector<Vec4i> hierarchy;
-
-// MORPH_RECT = 0
-// MORPH_ELLIPSE = 1
-// MORPH_CROSS = 2
-int morph_elem = 0;
-
-// Kernel size
-int morph_size = 6;
-
-int morph_operator = 0;
 
 int const max_operator = 4;
 int const max_elem = 2;
@@ -91,7 +86,8 @@ int totalPointsInArea = 0;
 4: TM COEFF  
 5: TM COEFF NORMED
 */
-int match_method = 0;
+int match_method = 5;
+int tmpCounterMatch = 0;
 Mat spliter, resultMatching;
 bool changeClientMarker = false;
 Mat resultSpliterMatching;
@@ -99,7 +95,7 @@ Mat resultSpliterMatching;
 /* Functions headers */
 Mat thresh_callback(Mat src, String mask_type, Mat frame);
 Mat spliterMatching(Mat);
-void processVideo(char* videoFilename);
+int processVideo(char* videoFilename);
 void Erosion( int, void* );
 void Dilation( int, void* );
 
@@ -170,7 +166,8 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
-void processVideo(char* videoFilename) {
+/**  @function processVideo  */
+int processVideo(char* videoFilename) {
     //create the capture object
     VideoCapture capture(videoFilename);
     if(!capture.isOpened()){
@@ -183,40 +180,35 @@ void processVideo(char* videoFilename) {
     while( (char)keyboard != 'q' && (char)keyboard != 27 ){
         //read the current frame
         if(!capture.read(frame)) {
-            cout << "Unable to read next frame." << endl;
-            cout << "Exiting..." << endl;
-            cout << numberOfProducts << endl;
-            return;
+            cerr << "Unable to read next frame." << endl;
+            cerr << "Exiting..." << endl;
+            exit(EXIT_FAILURE);
         }
 
         resultSpliterMatching = spliterMatching(frame);
-
-        if(changeClientMarker)
-        {
-          putText(resultSpliterMatching, "CHANGE CLEINT", cv::Point(300, 300), FONT_HERSHEY_SIMPLEX, 0.5 , yellow);
-        }
-
-        imshow( "Template matching result", resultSpliterMatching);
 
         frameNumber ++;
 
         //update the background model
         Mat closing_output;
         cvtColor(frame, closing_output, CV_RGB2GRAY);
-        erode( closing_output, closing_output, erode_element );
-        dilate( closing_output, closing_output, erode_element );
 
         pMOG->apply(closing_output, fgMaskMOG,0);
         //pMOG2->apply(frame, fgMaskMOG2);
+
+        erode( fgMaskMOG, closing_output, erode_element);
+        dilate( closing_output, fgMaskMOG, erode_element);
 
         if(!fgMaskMOG.empty())
         {
           drawing = thresh_callback(fgMaskMOG, "mog1", frame);
           namedWindow( "Mask", WINDOW_AUTOSIZE );
-          imshow("Mask", drawing);
+          imshow("Mask", frame);
 
           // Add product rectangles detected to original frame
           add(drawing,frame,drawing);
+          // Add product change cleint info to original frame
+          add(drawing, resultSpliterMatching,drawing);
 
           if(frameNumber == 0)
           {
@@ -234,12 +226,19 @@ void processVideo(char* videoFilename) {
 
           char str1[20];
           char str2[20];
+          char str3[20];
           sprintf(str1,"Antennas target direction: %.1f", percentage);
           sprintf(str2,"Products already detected: %d", numberOfProducts);
-          sprintf(str2,"Products already detected: %d", numberOfProducts);
+          
+          if(changeClientMarker)
+            sprintf(str3,"Change cleint: True");
+          else
+            sprintf(str3,"Change cleint: False");
 
           putText(drawing, str1, cv::Point(15, 20), FONT_HERSHEY_SIMPLEX, 0.7 , red);
           putText(drawing, str2, cv::Point(15, 40), FONT_HERSHEY_SIMPLEX, 0.7 , red);
+          putText(drawing, str3, cv::Point(15, 60), FONT_HERSHEY_SIMPLEX, 0.7 , yellow);
+
           imshow("Products Detector", drawing); //aqui
         } 
 
@@ -259,6 +258,7 @@ void processVideo(char* videoFilename) {
     }
     //delete capture object
     capture.release();
+    return EXIT_SUCCESS;
 }
 
 /** @function thresh_callback */
@@ -269,13 +269,13 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
 
   Canny(src, canny_output, 180, 200, 3, true);
 
-  blur(canny_output, canny_output, Size(11,11));
+  blur(canny_output, canny_output, Size(7,7));
 
   findContours( canny_output, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
   for (vector<vector<Point> >::iterator it = contours.begin(); it!=contours.end(); )
   {
-    if (it->size()< 100)
+    if (it->size()< 80)
         it=contours.erase(it);
     else
         ++it;
@@ -308,7 +308,7 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   //First Approach -> minAreaRect
   for( int i = 0; i < contours.size(); i++ )
   { 
-       if( contours[i].size() > 100 )
+       if( contours[i].size() > 90 )
        { 
           minRect[i] = minAreaRect( Mat(contours[i]) );
           minEllipse[i] = fitEllipse( Mat(contours[i]) ); 
@@ -391,23 +391,13 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
       else
       {
           //drawContours( drawing, contours, i, blue, CV_FILLED, 8, hierarchy, 0, Point() );
-          if (mc[i].y < ((maxLinePosition-linePosition) + 2) && mc[i].y > ((maxLinePosition-linePosition) - 2))
-          {
-            circle( drawing, mc[i],10, green, -1, 8, 0 );
-            numberOfProducts ++;
-          }  
-          else
-          {
-            circle( drawing, mc[i],10, red, -1, 8, 0 );
-          }
-
           Point2f rect_points[4]; 
           minRect[i].points( rect_points);
 
           bool draw = true;
-          for( int j = 0; j < 4; j++ )
+          for( int j = 0; j < 4; j++)
           {
-            if(norm(rect_points[j] - rect_points[(j+1)%4]) < 50 )
+            if(norm(rect_points[j] - rect_points[(j+1)%4]) <= 55 )
             {
               draw = false;
               break;
@@ -416,6 +406,16 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
 
           if(draw)
           {
+            if (mc[i].y < ((maxLinePosition-linePosition) + 1.5) && mc[i].y > ((maxLinePosition-linePosition) - 1.5))
+            {
+              circle( drawing, mc[i],30, green, -1, 8, 0 );
+              numberOfProducts ++;
+            }  
+            else
+            {
+              circle( drawing, mc[i],10, red, -1, 8, 0 );
+            }
+
             for( int j = 0; j < 4; j++ )
             {
               line( drawing, rect_points[j], rect_points[(j+1)%4], blue, 2, 8 );
@@ -428,9 +428,9 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   return drawing;
 }
 
+/**  @function spliterMatching  */
 Mat spliterMatching(Mat frame)
 {
-
   Mat img_display;
   img_display = frame;
 
@@ -456,37 +456,21 @@ Mat spliterMatching(Mat frame)
     { matchLoc = minLoc; }
   else
     { matchLoc = maxLoc; }
-
   
   Mat tmp = Mat::zeros( img_display.size(), CV_8UC3 );
 
-  if(matchLoc.y >= 400)
+  if(matchLoc.y > 360)
+  {
+    tmpCounterMatch ++;
+  }
+  else
+    tmpCounterMatch = 0;
+
+  if(tmpCounterMatch > 8)
   {
     changeClientMarker = true;
     rectangle( tmp, matchLoc, Point( matchLoc.x + spliter.cols , matchLoc.y + spliter.rows ), yellow, 2, 8, 0 );
   }
+
   return tmp;
-}
-
-/**  @function Erosion  */
-void Erosion( int, void* )
-{
-  if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
-  else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
-  else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
-
-  erosion_element = getStructuringElement( erosion_type,
-                       Size( 2*erosion_size + 1, 2*erosion_size+1 ),
-                       Point( erosion_size, erosion_size ) );
-}
-
-void Dilation( int, void* )
-{
-  if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
-  else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
-  else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
-
-  dilation_element = getStructuringElement( dilation_type,
-                       Size( 2*dilation_size + 1, 2*dilation_size+1 ),
-                       Point( dilation_size, dilation_size ) );
 }
