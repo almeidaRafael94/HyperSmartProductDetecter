@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
     {
         //input data coming from a video
         processVideo(argv[2]);
-        cout << numberOfProducts << endl;
+        //cout << numberOfProducts << endl;
 
     }
     else {
@@ -188,6 +188,9 @@ int processVideo(char* videoFilename) {
         resultSpliterMatching = spliterMatching(frame);
 
         frameNumber ++;
+        //cout << frameNumber << endl;
+        //cout << numberOfProducts << endl;
+
 
         //update the background model
         Mat closing_output;
@@ -203,7 +206,7 @@ int processVideo(char* videoFilename) {
         {
           drawing = thresh_callback(fgMaskMOG, "mog1", frame);
           namedWindow( "Mask", WINDOW_AUTOSIZE );
-          imshow("Mask", frame);
+          imshow("Mask", resultSpliterMatching);
 
           // Add product rectangles detected to original frame
           add(drawing,frame,drawing);
@@ -287,7 +290,7 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
   vector<Moments> mu(contours.size() );
   for( int i = 0; i < contours.size(); i++ )
   { 
-      mu[i] = moments( contours[i], false ); 
+      mu[i] = moments( contours[i], false); 
   }
 
   //  Get the mass centers:
@@ -406,8 +409,11 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
 
           if(draw)
           {
-            if (mc[i].y < ((maxLinePosition-linePosition) + 1.5) && mc[i].y > ((maxLinePosition-linePosition) - 1.5))
+            if (mc[i].y < ((maxLinePosition-linePosition) + 1.7) && mc[i].y > ((maxLinePosition-linePosition) - 1.7))
             {
+
+              //cout << frameNumber << endl;
+
               circle( drawing, mc[i],30, green, -1, 8, 0 );
               numberOfProducts ++;
             }  
