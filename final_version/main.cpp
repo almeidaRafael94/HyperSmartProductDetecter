@@ -76,7 +76,7 @@ int frameNumber = 0;
 double percentageAvg = 0;
 double percentage = 50;
 int totalPointsInArea = 0;
-int approach=2;
+int approach=1;
 
 
 
@@ -111,7 +111,7 @@ std::map<int, product> elements_map;
 int main(int argc, char* argv[])
 {
     //check for the input parameter correctness
-    if(argc != 3) {
+    if(argc != 4) {
         cerr <<"Incorret input list" << endl;
         cerr <<"Try ./executable -vid (path to video file)" << endl;
         cerr <<"exiting..." << endl;
@@ -157,10 +157,12 @@ int main(int argc, char* argv[])
     createTrackbar( "Draw", "Products Detector",&poly, maxPoly);
     //---------------------------------------------------------------------------------------------
      
-    if(strcmp(argv[1], "-vid") == 0) 
-    {
+    char* p; 
+    if(strcmp(argv[1], "-vid") == 0 && (strtol(argv[2], &p, 10) == 1 || strtol(argv[2], &p, 10) == 2)) 
+    {   
+        approach = strtol(argv[2], &p, 10);      
         //input data coming from a video
-        processVideo(argv[2]);
+        processVideo(argv[3]);
         cout << numberOfProducts << endl;
 
     }
