@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     spliter = imread("slit.png");
 
     // Create Template matching result window
-    //namedWindow( "Template matching result", WINDOW_AUTOSIZE );
+    namedWindow( "Template matching result", WINDOW_AUTOSIZE );
 
     //create Background Subtractor objects
     pMOG = bgsegm::createBackgroundSubtractorMOG(); //MOG approach
@@ -215,8 +215,8 @@ int processVideo(char* videoFilename) {
         if(!fgMaskMOG.empty())
         {  
           drawing = thresh_callback(fgMaskMOG, "mog1", frame);
-          //namedWindow( "Mask", WINDOW_AUTOSIZE );
-          //imshow("Mask", frame);
+          namedWindow( "Original Video", WINDOW_AUTOSIZE );
+          imshow("Original Video", frame);
 
           // Add product rectangles detected to original frame
           add(drawing,frame,drawing);
@@ -255,16 +255,13 @@ int processVideo(char* videoFilename) {
           imshow("Products Detector", drawing);
 
           if(playVideo){
-            key = waitKey(5);
+            key = waitKey(60);
           }else{
             key = waitKey(0);
           }
         }
         if(key == 'p')
           playVideo = !playVideo;  
-
-        //get the input from the keyboard
-        //playVideo = waitKey( 30 );
     }
     //delete capture object
     capture.release();
@@ -405,7 +402,7 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
       }
       else
       {
-          //drawContours( drawing, contours, i, blue, CV_FILLED, 8, hierarchy, 0, Point() );
+         
 
           Point2f rect_points[4]; 
           minRect[i].points( rect_points);
@@ -468,12 +465,10 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
         }
       }
     
-    cerr << "elements number" << elements_map.size() << endl;
     if(elements_map.size() != 0){
 
       for( int i = 0; i< elements_map.size(); i++ )
       {
-          //Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
           Scalar green = Scalar(0,255,0);
           Scalar red = Scalar(0,0,255);
           Scalar blue = Scalar(255,255,0);
@@ -484,21 +479,49 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
             percentageAvg += elements_map[i].center.x;
           }
 
-          if (elements_map[i].center.y < ((maxLinePosition-linePosition) + 2) && elements_map[i].tracked )
+          if (elements_map[i].center.y < (maxLinePosition-linePosition) && elements_map[i].tracked )
           {
-            //circle( drawing, elements_map[i].center ,10, green, -1, 8, 0 );
+           
             numberOfProducts ++;
-            if(numberOfProducts == 1)
-              cout << "test" << numberOfProducts << "frame" << frameNumber << endl;
             elements_map[i].tracked = false;
-            cerr << "counting" <<  numberOfProducts << endl;
+            
           }  
           
       }
     }
+    for( int i = 0; i< contours.size(); i++ ){
+
+      Point2f rect_points[4]; 
+      minRect[i].points( rect_points);
+
+      bool draw = true;
+      for( int j = 0; j < 4; j++)
+      {
+        if(norm(rect_points[j] - rect_points[(j+1)%4]) <= 55 )
+        {
+          draw = false;
+          break;
+        }
+      }
+
+      if(draw)
+      {
+        if (mc[i].y < ((maxLinePosition-linePosition) + 1.7) && mc[i].y > ((maxLinePosition-linePosition) - 1.7))
+        {
+          circle( drawing, mc[i],30, green, -1, 8, 0 );
+        }  
+        else
+        {
+          circle( drawing, mc[i],10, red, -1, 8, 0 );
+        }
+
+        for( int j = 0; j < 4; j++ )
+        {
+          line( drawing, rect_points[j], rect_points[(j+1)%4], blue, 2, 8 );
+        }
+      }
+    }
   }
-    
-  cerr << numberOfProducts << endl;
 
   percentageAvg = percentageAvg/totalPointsInArea;
 
