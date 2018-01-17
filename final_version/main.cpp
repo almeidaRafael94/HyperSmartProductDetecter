@@ -120,9 +120,6 @@ int main(int argc, char* argv[])
 
     spliter = imread("slit.png");
 
-    // Create Template matching result window
-    namedWindow( "Template matching result", WINDOW_AUTOSIZE );
-
     //create Background Subtractor objects
     pMOG = bgsegm::createBackgroundSubtractorMOG(); //MOG approach
     //pMOG2 = createBackgroundSubtractorMOG2();     //MOG2 approach
