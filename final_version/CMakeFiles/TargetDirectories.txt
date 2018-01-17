@@ -1,0 +1,3 @@
+/Users/ruioliveira/Desktop/HyperSmartProductDetecter/template_matching/CMakeFiles/rebuild_cache.dir
+/Users/ruioliveira/Desktop/HyperSmartProductDetecter/template_matching/CMakeFiles/edit_cache.dir
+/Users/ruioliveira/Desktop/HyperSmartProductDetecter/template_matching/CMakeFiles/detectionObject.dir
