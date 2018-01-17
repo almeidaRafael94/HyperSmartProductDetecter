@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
     spliter = imread("slit.png");
 
     // Create Template matching result window
-    namedWindow( "Template matching result", WINDOW_AUTOSIZE );
+    //namedWindow( "Template matching result", WINDOW_AUTOSIZE );
 
     //create Background Subtractor objects
     pMOG = bgsegm::createBackgroundSubtractorMOG(); //MOG approach
@@ -215,8 +215,8 @@ int processVideo(char* videoFilename) {
         if(!fgMaskMOG.empty())
         {  
           drawing = thresh_callback(fgMaskMOG, "mog1", frame);
-          namedWindow( "Mask", WINDOW_AUTOSIZE );
-          imshow("Mask", frame);
+          //namedWindow( "Mask", WINDOW_AUTOSIZE );
+          //imshow("Mask", frame);
 
           // Add product rectangles detected to original frame
           add(drawing,frame,drawing);
@@ -488,6 +488,8 @@ Mat thresh_callback(Mat src, String mask_type, Mat frame)
           {
             //circle( drawing, elements_map[i].center ,10, green, -1, 8, 0 );
             numberOfProducts ++;
+            if(numberOfProducts == 1)
+              cout << "test" << numberOfProducts << "frame" << frameNumber << endl;
             elements_map[i].tracked = false;
             cerr << "counting" <<  numberOfProducts << endl;
           }  
